@@ -1,14 +1,16 @@
+import json
+import os
 import tkinter as tk
 import webbrowser
+from tkinter import filedialog
+from tkinter import font
 from tkinter import messagebox
+from tkinter import ttk
+
 import requests
 from openpyxl import load_workbook
-import os
-from tkinter import filedialog
-from tkinter import ttk
-from tkinter import font
 from tkinterdnd2 import DND_FILES, TkinterDnD
-import json
+
 
 class DictionaryCreator:
     def __init__(self, root):
@@ -76,10 +78,6 @@ class DictionaryCreator:
                   command=self.select_excel_file,
                   #bg="#bdbdbd"
                   ).pack(side=tk.LEFT, padx=5)
-
-        # Фрейм для ввода имени словаря
-        item_frame = tk.Frame(main_frame)
-        item_frame.pack(fill=tk.X, pady=5)
 
         def openhyperlink(url):
             webbrowser.open_new(url)
@@ -181,7 +179,6 @@ class DictionaryCreator:
             self.dictionaries_list[index] = new_dict
             self.update_display()
 
-
         item_frame = tk.Frame(list_frame_params)
         item_frame.pack(pady=5)
         item_label = tk.Label(item_frame, text="Item" + ":", anchor="w", width=10, foreground="#80a3d1", cursor="hand2")
@@ -243,6 +240,14 @@ class DictionaryCreator:
         self.excelsheet_combobox = ttk.Combobox(excelsheet_frame, textvariable=self.excelsheet_var)
         self.excelsheet_combobox.pack(fill=tk.X, expand=True)
 
+        self.style = ttk.Style()
+        self.style.configure("My.TCheckbutton", background="#262626", foreground="#d6d6d6")
+
+        self.zero_check_var = tk.IntVar()
+        zero_check_cb = ttk.Checkbutton(list_frame_params,text="Dont export 0", variable=self.zero_check_var, style="My.TCheckbutton")
+        zero_check_cb.pack(side=tk.LEFT, padx=2)
+
+
 
     def select_excel_file(self, file_path=None):
         """Выбор существующего Excel файла"""
@@ -267,7 +272,7 @@ class DictionaryCreator:
                     )
                     self.export_button.config(state=tk.NORMAL)
                 else:
-                    messagebox.showerror("Ошибка", "File doesnt exist")
+                    messagebox.showerror("Error", "File doesnt exist")
                 sheet_names = []
                 if self.current_excel_file:
                     try:
@@ -279,7 +284,7 @@ class DictionaryCreator:
                 self.excelsheet_combobox['values'] = sheet_names
 
             except Exception as e:
-                messagebox.showerror("Ошибка", f"Cant open a file:\n{str(e)}")
+                messagebox.showerror("Error", f"Cant open a file:\n{str(e)}")
 
     def edit_params(self, dictionary, index):
         self.item_var.set(dictionary["item"])
@@ -387,8 +392,8 @@ class DictionaryCreator:
                 export_data = f"{response.json()[0][f'{dictionary.get('stat')}']}"
                 if export_data.isdigit() and export_data.isascii():
                     export_data = int(export_data)
-
-                # Записываем данные в указанную ячейку
+                    if int(export_data) == 0 and self.zero_check_var.get() == 1:
+                        continue
                 ws[excel_cell] = export_data
                 exported_count += 1
 
